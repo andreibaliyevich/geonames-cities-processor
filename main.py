@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -50,9 +51,18 @@ def load_geonames_data():
     print("Step 2: Processing allCountries.txt (Filtering populated places)...")
 
     cols = [
-        "name", "asciiname", "alternatenames", "latitude", "longitude",
-        "feature_class", "feature_code", "country_code",
-        "admin1_code", "admin2_code", "population", "timezone",
+        "name",
+        "asciiname",
+        "alternatenames",
+        "latitude",
+        "longitude",
+        "feature_class",
+        "feature_code",
+        "country_code",
+        "admin1_code",
+        "admin2_code",
+        "population",
+        "timezone",
     ]
 
     df = pd.read_csv(
@@ -60,10 +70,25 @@ def load_geonames_data():
         sep="\t",
         header=None,
         names=[
-            "geonameid", "name", "asciiname", "alternatenames", "latitude", "longitude",
-            "feature_class", "feature_code", "country_code", "cc2", "admin1_code",
-            "admin2_code", "admin3_code", "admin4_code", "population", "elevation",
-            "dem", "timezone", "modification_date",
+            "geonameid",
+            "name",
+            "asciiname",
+            "alternatenames",
+            "latitude",
+            "longitude",
+            "feature_class",
+            "feature_code",
+            "country_code",
+            "cc2",
+            "admin1_code",
+            "admin2_code",
+            "admin3_code",
+            "admin4_code",
+            "population",
+            "elevation",
+            "dem",
+            "timezone",
+            "modification_date",
         ],
         usecols=cols,
         dtype={"admin1_code": str, "admin2_code": str},
@@ -72,14 +97,20 @@ def load_geonames_data():
     )
 
     # Filtering logic
-    mask = (df["feature_class"] == "P") & \
-           (df["feature_code"].isin(ALLOWED_F_CODES)) & \
-           (df["population"] >= MIN_POPULATION)
+    mask = (
+        (df["feature_class"] == "P")
+        & (df["feature_code"].isin(ALLOWED_F_CODES))
+        & (df["population"] >= MIN_POPULATION)
+    )
     df = df[mask].copy()
 
     # Create join keys
-    df["admin1_key"] = df["country_code"].astype(str) + "." + df["admin1_code"].fillna("")
-    df["admin2_key"] = df["admin1_key"] + "." + df["admin2_code"].fillna("")
+    df["admin1_key"] = (
+        df["country_code"].astype(str) + "." + df["admin1_code"].astype(str)
+    )
+    df["admin2_key"] = (
+        df["admin1_key"].astype(str) + "." + df["admin2_code"].astype(str)
+    )
 
     print("Step 3: Merging data...")
 
@@ -98,21 +129,43 @@ def load_geonames_data():
     )
 
     # Column selection and cleanup
-    result = df[[
-        "name", "asciiname", "alternatenames", "latitude", "longitude", "timezone",
-        "country_name", "iso2", "iso3", "admin_name", "admin_name2", "population",
-    ]].copy()
+    result = df[
+        [
+            "name",
+            "asciiname",
+            "alternatenames",
+            "latitude",
+            "longitude",
+            "timezone",
+            "country_name",
+            "iso2",
+            "iso3",
+            "admin_name",
+            "admin_name2",
+            "population",
+        ]
+    ].copy()
 
     result.columns = [
-        "name", "ascii_name", "alternate_names", "latitude", "longitude", "time_zone",
-        "country_name", "country_code_iso2", "country_code_iso3",
-        "region_name", "district_name", "population",
+        "name",
+        "ascii_name",
+        "alternate_names",
+        "latitude",
+        "longitude",
+        "time_zone",
+        "country_name",
+        "country_code_iso2",
+        "country_code_iso3",
+        "region_name",
+        "district_name",
+        "population",
     ]
 
     # Final result save
     print(f"Step 4: Saving {len(result)} records to {OUTPUT_FILE}...")
     result.to_csv(OUTPUT_FILE, index=False, encoding="utf-8")
     print("Done! Processing complete.")
+
 
 if __name__ == "__main__":
     load_geonames_data()
